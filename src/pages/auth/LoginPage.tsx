@@ -76,9 +76,9 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-orange-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
+        <Link to="/" className="flex justify-center">
           <ChefHat className="h-12 w-12 text-orange-500" />
-        </div>
+        </Link>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
           ズボラシェフAIにログイン
         </h2>
@@ -86,6 +86,10 @@ const LoginPage: React.FC = () => {
           アカウントをお持ちでない方は{' '}
           <Link to="/register" className="font-medium text-orange-500 hover:text-orange-400">
             新規登録
+          </Link>
+          {' '}または{' '}
+          <Link to="/" className="font-medium text-orange-500 hover:text-orange-400">
+            トップページに戻る
           </Link>
         </p>
       </div>
