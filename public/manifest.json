@@ -2,7 +2,7 @@
   "name": "ズボラシェフAI",
   "short_name": "ズボラシェフ",
   "description": "AIがあなたにぴったりのレシピ動画を見つけます",
-  "start_url": "/",
+  "start_url": "/home",
   "display": "standalone",
   "background_color": "#fff7ed",
   "theme_color": "#f97316",
