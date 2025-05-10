@@ -74,7 +74,7 @@ export const sendEmail = async ({
       console.error('Error details:', {
         message: error.message,
         stack: error.stack,
-        name: error.name
+        name: error.name,
         timestamp: new Date().toISOString()
       });
     }
