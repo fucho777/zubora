@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { supabase } from './supabase';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,6 +26,25 @@ export function getRemainingSearches(dailyCount: number): number {
 
 export function getRemainingRecipes(savedCount: number): number {
   return Math.max(0, 5 - savedCount);
+}
+
+export async function logEdgeFunctionError(
+  functionName: string,
+  errorMessage: string,
+  metadata: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    await supabase
+      .from('edge_function_logs')
+      .insert({
+        function_name: functionName,
+        status: 'error',
+        error_message: errorMessage,
+        metadata
+      });
+  } catch (error) {
+    console.error('Failed to log edge function error:', error);
+  }
 }
 
 export async function cleanupExpiredTokens(): Promise<void> {
