@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
         switch (job.job_type) {
           case 'cleanup_tokens':
             await supabase.rpc('cleanup_expired_verification_tokens');
+            await supabase.rpc('cleanup_expired_password_reset_tokens');
             break;
 
           case 'cleanup_old_jobs':

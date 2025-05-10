@@ -1,4 +1,5 @@
 import { createTransport } from 'npm:nodemailer@6.9.12';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.6';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,28 +65,33 @@ Deno.serve(async (req) => {
       subject: 'パスワードリセットのご案内 - ズボラシェフAI',
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #f97316;">ズボラシェフAI</h1>
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #f97316; margin: 0;">ズボラシェフAI</h1>
+            <p style="color: #666; margin-top: 10px;">パスワードリセットのご案内</p>
+          </div>
           
-          <p>パスワードリセットのリクエストを受け付けました。</p>
+          <p>パスワードリセットのリクエストを受け付けました。<br>
+          以下のボタンをクリックして、新しいパスワードを設定してください。</p>
           
-          <p>以下のボタンをクリックして、新しいパスワードを設定してください：</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
+          <div style="text-align: center; margin: 40px 0;">
             <a href="${resetUrl}" 
                style="background-color: #f97316; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 6px; display: inline-block;">
+                      text-decoration: none; border-radius: 6px; display: inline-block;
+                      font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               パスワードを再設定する
             </a>
           </div>
           
-          <p style="color: #666; font-size: 14px;">
-            このリンクの有効期限は1時間です。<br>
-            心当たりのない場合は、このメールを破棄してください。
-          </p>
+          <div style="background-color: #fff3e0; padding: 15px; border-radius: 6px; margin: 30px 0;">
+            <p style="color: #d84315; font-size: 14px; margin: 0;">
+              ※ このリンクの有効期限は1時間です。<br>
+              ※ パスワードリセットの心当たりがない場合は、このメールを破棄してください。
+            </p>
+          </div>
           
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
           
-          <p style="color: #666; font-size: 12px; text-align: center;">
+          <p style="color: #666; font-size: 12px; text-align: center; margin-bottom: 0;">
             このメールは自動送信されています。返信はできませんのでご了承ください。
           </p>
         </div>
