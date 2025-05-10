@@ -7,9 +7,9 @@ interface EmailOptions {
 
 export const sendEmail = async ({
   type,
-  email: string, 
-  token: string,
-  baseUrl: string
+  email, 
+  token,
+  baseUrl
 }: EmailOptions) => {
   try {
     // Ensure we have a valid base URL
