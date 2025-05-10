@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChefHat, AlertCircle, Check } from 'lucide-react';
+import { sendPasswordResetEmail } from '../../lib/email';
 import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -17,17 +18,38 @@ const ForgotPasswordPage: React.FC = () => {
     setError(null);
 
     try {
+      console.log('Initiating password reset for:', email);
+      
       const { data, error } = await supabase
         .rpc('initiate_password_reset', {
           p_email: email
         });
 
       if (error) throw error;
+      
+      if (!data.token) {
+        // Still show success even if no token (prevents email enumeration)
+        setSuccess(true);
+        return;
+      }
+      
+      console.log('Got reset token, sending email...');
+      
+      // Send password reset email
+      await sendPasswordResetEmail(
+        email,
+        data.token,
+        window.location.origin
+      );
 
       setSuccess(true);
     } catch (err) {
       console.error('Password reset error:', err);
-      setError('パスワードリセットの処理中にエラーが発生しました。');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('パスワードリセットの処理中にエラーが発生しました。');
+      }
     } finally {
       setIsSubmitting(false);
     }
