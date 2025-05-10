@@ -1,9 +1,9 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.39.6';
+import { createTransport } from 'npm:nodemailer@6.9.12';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
 Deno.serve(async (req) => {
@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: corsHeaders,
-      status: 204,
+      status: 204
     });
   }
 
@@ -28,12 +28,12 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get email service configuration
-    const emailApiKey = Deno.env.get('EMAIL_API_KEY');
-    const emailFrom = Deno.env.get('EMAIL_FROM');
+    // Get Gmail configuration
+    const gmailUser = Deno.env.get('GMAIL_USER');
+    const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
-    if (!emailApiKey || !emailFrom) {
-      throw new Error('Email service not configured');
+    if (!gmailUser || !gmailAppPassword) {
+      throw new Error('Gmail configuration is missing');
     }
 
     // Log attempt
@@ -48,67 +48,49 @@ Deno.serve(async (req) => {
     // Construct reset URL with token
     const resetUrl = `${redirectUrl}?token=${token}`;
 
-    // Send email using Resend
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${emailApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: emailFrom,
-        to: email,
-        subject: 'パスワードリセットのご案内 - ズボラシェフAI',
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>パスワードリセット - ズボラシェフAI</title>
-            </head>
-            <body style="font-family: sans-serif; line-height: 1.6; color: #333;">
-              <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1 style="color: #f97316; margin-bottom: 30px;">
-                  ズボラシェフAI
-                </h1>
-                
-                <p>パスワードリセットのリクエストを受け付けました。</p>
-                
-                <p>以下のボタンをクリックして、新しいパスワードを設定してください：</p>
-                
-                <p style="text-align: center; margin: 30px 0;">
-                  <a href="${resetUrl}" 
-                     style="background-color: #f97316; 
-                            color: white; 
-                            padding: 12px 24px; 
-                            text-decoration: none; 
-                            border-radius: 6px;
-                            display: inline-block;">
-                    パスワードを再設定する
-                  </a>
-                </p>
-                
-                <p style="color: #666; font-size: 14px;">
-                  ※このリンクの有効期限は1時間です。<br>
-                  ※心当たりのない場合は、このメールを破棄してください。
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                
-                <p style="color: #666; font-size: 12px; text-align: center;">
-                  このメールは自動送信されています。返信はできませんのでご了承ください。
-                </p>
-              </div>
-            </body>
-          </html>
-        `,
-      }),
+    // Create email transporter
+    const transporter = createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailAppPassword
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to send email: ${errorData.message || response.statusText}`);
-    }
+    // Send email
+    await transporter.sendMail({
+      from: gmailUser,
+      to: email,
+      subject: 'パスワードリセットのご案内 - ズボラシェフAI',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #f97316;">ズボラシェフAI</h1>
+          
+          <p>パスワードリセットのリクエストを受け付けました。</p>
+          
+          <p>以下のボタンをクリックして、新しいパスワードを設定してください：</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #f97316; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block;">
+              パスワードを再設定する
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">
+            このリンクの有効期限は1時間です。<br>
+            心当たりのない場合は、このメールを破棄してください。
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          
+          <p style="color: #666; font-size: 12px; text-align: center;">
+            このメールは自動送信されています。返信はできませんのでご了承ください。
+          </p>
+        </div>
+      `
+    });
 
     // Update attempt record with success
     await supabase
