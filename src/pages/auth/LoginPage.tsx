@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ChefHat } from 'lucide-react';
+import { ChefHat, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { useEffect, useRef } from 'react';
 
 interface ValidationErrors {
   email?: string;
@@ -15,8 +16,19 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { signIn } = useAuthStore();
+  
+  // エラーメッセージの自動消去
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
   
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
@@ -47,17 +59,19 @@ const LoginPage: React.FC = () => {
     const { error: signInError } = await signIn(email, password);
     
     if (signInError) {
-      console.error('Login error:', signInError);
+      // パスワードをクリアしてフォーカスを移動
+      setPassword('');
+      passwordInputRef.current?.focus();
       
       // より具体的なエラーメッセージの表示
       if (signInError.message?.includes('Invalid login credentials') || 
           signInError.message?.includes('invalid credentials') ||
           signInError.message?.includes('Invalid email or password')) {
-        setError('メールアドレスまたはパスワードが正しくありません。入力内容を確認してください。');
+        setError('ユーザーIDまたはパスワードが正しくありません');
       } else if (signInError.message?.includes('Email not confirmed')) {
         setError('メールアドレスの確認が完了していません。受信トレイをご確認ください。');
       } else if (signInError.message?.includes('not found') || signInError.message?.includes('user not found')) {
-        setError('このメールアドレスに対応するアカウントが見つかりません。新規登録が必要です。');
+        setError('アカウントが存在しません');
       } else if (signInError.message?.includes('network')) {
         setError('ネットワーク接続に問題があります。インターネット接続を確認して、再度お試しください。');
       } else if (signInError.message?.includes('timeout')) {
@@ -103,6 +117,18 @@ const LoginPage: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-orange-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* エラーメッセージ */}
+      {error && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 shadow-lg">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" className="flex justify-center">
           <ChefHat className="h-12 w-12 text-orange-500" />
@@ -141,17 +167,12 @@ const LoginPage: React.FC = () => {
               type="password"
               id="password"
               value={password}
+              ref={passwordInputRef}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="パスワード"
               error={validationErrors.password}
             />
-            
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
             
             <Button
               type="submit"
