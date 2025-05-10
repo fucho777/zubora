@@ -17,6 +17,14 @@ export const sendEmail = async ({
       baseUrl = window.location.origin;
     }
 
+    console.log('Sending email:', {
+      type,
+      hasEmail: !!email,
+      hasToken: !!token,
+      baseUrl,
+      timestamp: new Date().toISOString()
+    });
+
     // Construct the appropriate redirect URL
     const redirectUrl = `${baseUrl}/${type === 'verification' ? 'verify-email' : 'reset-password'}`;
 
@@ -45,9 +53,19 @@ export const sendEmail = async ({
 
   if (!response.ok) {
     const error = await response.json();
+    console.error('Email sending failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      timestamp: new Date().toISOString()
+    });
     throw new Error(error.message || `Failed to send ${type} email`);
   }
 
+  console.log('Email sent successfully', {
+    type,
+    timestamp: new Date().toISOString()
+  });
   return response.json();
   } catch (error) {
     console.error(`Error sending ${type} email:`, error);
@@ -57,6 +75,7 @@ export const sendEmail = async ({
         message: error.message,
         stack: error.stack,
         name: error.name
+        timestamp: new Date().toISOString()
       });
     }
     throw new Error(`${type === 'verification' ? '確認' : 'リセット'}メールの送信に失敗しました。しばらく時間をおいて再度お試しください。`);
