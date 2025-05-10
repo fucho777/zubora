@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChefHat, Clock, Sparkles, Save, Search, PlayCircle, ArrowRight, Check } from 'lucide-react';
+import { ChefHat, Clock, Sparkles, Save, Search, PlayCircle, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   const scrollToHowItWorks = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -18,6 +19,24 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-white">
+      {/* Account deletion success message */}
+      {location.state?.accountDeleted && (
+        <div className="fixed top-4 right-4 z-50 bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-md">
+          <div className="flex items-start">
+            <Check className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
+            <div>
+              <h3 className="text-sm font-medium text-green-800">
+                アカウントが削除されました
+              </h3>
+              <p className="mt-1 text-sm text-green-700">
+                アカウントとすべての関連データが正常に削除されました。
+                ご利用ありがとうございました。
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Hero Section */}
       <header className="relative bg-gradient-to-b from-orange-50 to-white">
         <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=1600')] bg-cover bg-center opacity-10"></div>
