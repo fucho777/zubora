@@ -145,6 +145,10 @@ const LoginPage: React.FC = () => {
           <Link to="/" className="font-medium text-orange-500 hover:text-orange-400">
             トップページに戻る
           </Link>
+          {' '}または{' '}
+          <Link to="/forgot-password" className="font-medium text-orange-500 hover:text-orange-400">
+            パスワードをお忘れの方
+          </Link>
         </p>
       </div>
       
