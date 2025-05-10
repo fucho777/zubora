@@ -5,16 +5,44 @@ import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 
+interface ValidationErrors {
+  email?: string;
+  password?: string;
+}
+
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const navigate = useNavigate();
   const { signIn } = useAuthStore();
+  
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    
+    if (!email.trim()) {
+      errors.email = 'メールアドレスを入力してください。';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = 'メールアドレスの形式が正しくありません。';
+    }
+    
+    if (!password) {
+      errors.password = 'パスワードを入力してください。';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setValidationErrors({});
+    
+    if (!validateForm()) {
+      return;
+    }
     
     const { error: signInError } = await signIn(email, password);
     
@@ -100,19 +128,23 @@ const LoginPage: React.FC = () => {
             <Input
               label="メールアドレス"
               type="email"
+              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="登録したメールアドレス"
+              error={validationErrors.email}
             />
             
             <Input
               label="パスワード"
               type="password"
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="パスワード"
+              error={validationErrors.password}
             />
             
             {error && (
