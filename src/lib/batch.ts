@@ -46,6 +46,24 @@ export async function getBatchJob(jobId: string): Promise<BatchJob | null> {
   }
 }
 
+// Check if Edge Function is available
+async function checkEdgeFunctionAvailability(url: string, key: string): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `${url}/functions/v1/batch-processor/health`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${key}`
+        }
+      }
+    );
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function processBatchJobs(): Promise<void> {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -53,6 +71,15 @@ export async function processBatchJobs(): Promise<void> {
     
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase configuration is missing. Please check your environment variables.');
+    }
+
+    // Check if Edge Function is available before proceeding
+    const isAvailable = await checkEdgeFunctionAvailability(supabaseUrl, supabaseAnonKey);
+    if (!isAvailable) {
+      console.warn('Batch processor Edge Function is not available. Skipping batch processing.', {
+        timestamp: new Date().toISOString()
+      });
+      return;
     }
 
     console.log('Starting batch processing...', {
@@ -99,7 +126,10 @@ export async function processBatchJobs(): Promise<void> {
     };
 
     if (error instanceof Error && error.message.includes('Failed to fetch')) {
-      console.warn('Batch processing: Network error (Edge Function may not be deployed)', errorDetails);
+      console.warn('Batch processing: Network error (Edge Function may not be deployed)', {
+        ...errorDetails,
+        url: import.meta.env.VITE_SUPABASE_URL
+      });
       return; // Silently handle network errors in development
     }
     

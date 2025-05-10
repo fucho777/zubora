@@ -15,6 +15,15 @@ export const useBatch = () => useContext(BatchContext);
 export const BatchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const runBatchJobs = useCallback(async () => {
     try {
+      // Check if we have the required environment variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.warn('Supabase configuration is missing. Skipping batch jobs.');
+        return;
+      }
+
       await scheduleBatchJobs();
       
       console.log('Batch jobs scheduled successfully', {
@@ -29,6 +38,14 @@ export const BatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           message: error instanceof Error ? error.message : String(error),
           timestamp: new Date().toISOString()
         };
+        
+        if (error instanceof Error && error.message.includes('Failed to fetch')) {
+          console.warn('Failed to process batch jobs (Edge Function may not be deployed):', {
+            ...errorDetails,
+            url: supabaseUrl
+          });
+          return; // Silently handle network errors in development
+        }
         
         console.warn('Failed to process batch jobs:', errorDetails);
         
@@ -55,7 +72,7 @@ export const BatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     // Run initial batch jobs after a delay to ensure Edge Function is ready
-    const initialJobsTimeout = setTimeout(runBatchJobs, 1000);
+    const initialJobsTimeout = setTimeout(runBatchJobs, 5000); // Increased delay to 5 seconds
 
     // Set up interval for batch jobs
     const batchInterval = setInterval(runBatchJobs, 60 * 60 * 1000); // Run every hour
