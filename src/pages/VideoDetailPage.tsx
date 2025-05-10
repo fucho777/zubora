@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useRecipeStore } from '../store/recipeStore';
 import RecipeDetails from '../components/recipe/RecipeDetails';
 import { getRemainingRecipes } from '../lib/utils';
+import { useAuth } from '../providers/AuthProvider';
 
 const VideoDetailPage: React.FC = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -13,6 +14,7 @@ const VideoDetailPage: React.FC = () => {
     saveRecipe,
     fetchSavedRecipes,
   } = useRecipeStore();
+  const { isAuthenticated } = useAuth();
   
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,11 +32,19 @@ const VideoDetailPage: React.FC = () => {
     };
     
     loadRecipe();
-    fetchSavedRecipes();
-  }, [videoId, extractRecipe, fetchSavedRecipes]);
+    // 認証済みユーザーの場合のみ保存済みレシピを取得
+    if (isAuthenticated) {
+      fetchSavedRecipes();
+    }
+  }, [videoId, extractRecipe, fetchSavedRecipes, isAuthenticated]);
   
   const handleSaveRecipe = async () => {
     if (!currentRecipe) return;
+    if (!isAuthenticated) {
+      // ログインページにリダイレクト
+      window.location.href = `/login?redirect=${encodeURIComponent(`/video/${videoId}`)}`;
+      return;
+    }
     
     setIsSaving(true);
     setError(null);
@@ -56,14 +66,36 @@ const VideoDetailPage: React.FC = () => {
     );
   }
   
-  const isAlreadySaved = savedRecipes.some(
-    (recipe) => recipe.videoId === currentRecipe.videoId
-  );
+  // 未ログインユーザーの場合のデフォルト値を設定
+  let isAlreadySaved = false;
+  let remainingRecipes = 0;
   
-  const remainingRecipes = getRemainingRecipes(savedRecipes.length);
+  if (isAuthenticated) {
+    isAlreadySaved = savedRecipes.some(
+      (recipe) => recipe.videoId === currentRecipe.videoId
+    );
+    remainingRecipes = getRemainingRecipes(savedRecipes.length);
+  }
   
   return (
     <div className="space-y-6">
+      {!isAuthenticated && (
+        <div className="bg-orange-50 border border-orange-200 text-orange-700 px-4 py-3 rounded-lg flex justify-between items-center">
+          <div>
+            <p className="font-medium">ログインするとレシピを保存できます</p>
+            <p className="text-sm">アカウントを作成して、お気に入りのレシピを保存しましょう</p>
+          </div>
+          <div>
+            <a 
+              href={`/login?redirect=${encodeURIComponent(`/video/${videoId}`)}`} 
+              className="inline-block bg-orange-500 text-white px-4 py-2 rounded font-medium hover:bg-orange-600 transition-colors"
+            >
+              ログイン / 登録
+            </a>
+          </div>
+        </div>
+      )}
+      
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
           {error}

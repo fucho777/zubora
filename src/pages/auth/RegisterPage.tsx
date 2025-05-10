@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ChefHat } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/ui/Button';
@@ -11,7 +11,12 @@ const RegisterPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signUp } = useAuthStore();
+  
+  // URLからリダイレクト先を取得
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect') || '/home';
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,12 +65,13 @@ const RegisterPage: React.FC = () => {
         return;
       }
       
-      console.log('Registration successful, navigating to profile page');
+      console.log('Registration successful, navigating to verification page');
       // Ensure we're using the full origin for the verification page
       navigate('/verify-email', { 
         state: { 
           verificationEmailSent: true,
-          email: email
+          email: email,
+          redirectUrl: redirectUrl
         } 
       });
     } catch (err) {

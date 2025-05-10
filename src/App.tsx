@@ -38,12 +38,16 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             
+            {/* Public recipe detail route */}
+            <Route element={<Layout />}>
+              <Route path="/video/:videoId" element={<VideoDetailPage />} />
+            </Route>
+            
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
-                <Route path="/video/:videoId" element={<VideoDetailPage />} />
                 <Route path="/saved-recipes" element={<SavedRecipesPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>

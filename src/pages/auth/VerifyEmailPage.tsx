@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button';
 interface LocationState {
   verificationEmailSent?: boolean;
   email?: string;
+  redirectUrl?: string;
 }
 
 const VerifyEmailPage: React.FC = () => {
@@ -61,6 +62,15 @@ const VerifyEmailPage: React.FC = () => {
       );
       
       if (signUpError) throw signUpError;
+      
+      // 元のリダイレクトURLを維持
+      navigate('/verify-email', {
+        state: {
+          verificationEmailSent: true,
+          email: state.email,
+          redirectUrl: state.redirectUrl
+        }
+      });
       
       setVerificationStatus('waiting');
       setError(null);
@@ -121,8 +131,11 @@ const VerifyEmailPage: React.FC = () => {
 
         setVerificationStatus('success');
         setError(null);
+        
+        // リダイレクトURLが指定されていれば、そこにリダイレクト
+        const redirectUrl = state?.redirectUrl || '/login';
         setTimeout(() => {
-          navigate('/login');
+          navigate(redirectUrl);
         }, 3000);
       } catch (err) {
         console.error('Verification error:', err);
@@ -132,7 +145,7 @@ const VerifyEmailPage: React.FC = () => {
     };
 
     verifyEmail();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, state]);
 
   return (
     <div className="min-h-screen bg-orange-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -198,10 +211,10 @@ const VerifyEmailPage: React.FC = () => {
               </p>
               <div className="mt-6 space-y-4">
                 <Button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate(state?.redirectUrl || '/login')}
                   className="w-full"
                 >
-                  ログインページへ
+                  {state?.redirectUrl ? 'レシピページに移動' : 'ログインページへ'}
                 </Button>
                 <Link
                   to="/"

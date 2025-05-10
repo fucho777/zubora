@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ChefHat, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/ui/Button';
@@ -18,7 +18,12 @@ const LoginPage: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn } = useAuthStore();
+  
+  // URLからリダイレクト先を取得
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect') || '/home';
   
   // エラーメッセージの自動消去
   useEffect(() => {
@@ -88,7 +93,8 @@ const LoginPage: React.FC = () => {
       return;
     }
     
-    navigate('/home');
+    // ログイン成功後、リダイレクトURLがある場合はそこに遷移
+    navigate(redirectUrl);
   };
   
   // エラーコードに基づいた詳細なエラーメッセージを取得する関数

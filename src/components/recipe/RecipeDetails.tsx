@@ -3,6 +3,7 @@ import { BookOpen, Clock, ChefHat, FolderHeart, Tag } from 'lucide-react';
 import { RecipeData } from '../../store/recipeStore';
 import Button from '../ui/Button';
 import Card, { CardContent, CardHeader } from '../ui/Card';
+import LineIcon from '../ui/LineIcon';
 
 interface RecipeDetailsProps {
   recipe: RecipeData;
@@ -19,6 +20,18 @@ const RecipeDetails: React.FC<RecipeDetailsProps> = ({
   isAlreadySaved,
   remainingRecipes,
 }) => {
+  // LINE共有機能
+  const handleShareToLine = () => {
+    // 共有するURLを作成（現在のURL）
+    const shareUrl = encodeURIComponent(window.location.href);
+    // タイトルをエンコード
+    const shareTitle = encodeURIComponent(recipe.videoTitle);
+    // LINE共有URL
+    const lineShareUrl = `https://line.me/R/msg/text/?${shareTitle}%0D%0A${shareUrl}`;
+    // 新しいウィンドウで開く
+    window.open(lineShareUrl, '_blank');
+  };
+
   return (
     <div className="space-y-6">
       <div className="aspect-video w-full">
@@ -64,17 +77,27 @@ const RecipeDetails: React.FC<RecipeDetailsProps> = ({
           <p className="text-sm text-gray-500">
             残り保存可能レシピ: {remainingRecipes}/5
           </p>
-          <Button
-            onClick={onSaveRecipe}
-            disabled={isAlreadySaved || remainingRecipes === 0}
-            isLoading={isSaving}
-            className="flex items-center space-x-1"
-          >
-            <FolderHeart className="h-5 w-5" />
-            <span>
-              {isAlreadySaved ? 'レシピ保存済み' : 'レシピを保存する'}
-            </span>
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              onClick={handleShareToLine}
+              variant="outline"
+              className="flex items-center space-x-1 bg-[#06C755] hover:bg-[#06C755]/90 text-white border-none"
+            >
+              <LineIcon className="h-5 w-5" />
+              <span>LINEで共有</span>
+            </Button>
+            <Button
+              onClick={onSaveRecipe}
+              disabled={isAlreadySaved || remainingRecipes === 0}
+              isLoading={isSaving}
+              className="flex items-center space-x-1"
+            >
+              <FolderHeart className="h-5 w-5" />
+              <span>
+                {isAlreadySaved ? 'レシピ保存済み' : 'レシピを保存する'}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
       
