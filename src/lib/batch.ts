@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logEdgeFunctionError } from './utils';
 
 export interface BatchJob {
   id: string;
@@ -51,8 +52,14 @@ export async function processBatchJobs(): Promise<void> {
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase configuration is missing');
+      throw new Error('Supabase configuration is missing. Please check your environment variables.');
     }
+
+    console.log('Starting batch processing...', {
+      timestamp: new Date().toISOString(),
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey
+    });
 
     const response = await fetch(
       `${supabaseUrl}/functions/v1/batch-processor`,
@@ -60,28 +67,49 @@ export async function processBatchJobs(): Promise<void> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${supabaseAnonKey}`
         }
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        `Failed to process batch jobs: ${
-          errorData?.error || response.statusText
-        }`
-      );
+      const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+      
+      // Log the error details
+      await logEdgeFunctionError('batch-processor', errorData.error || response.statusText, {
+        status: response.status,
+        statusText: response.statusText,
+        timestamp: new Date().toISOString()
+      });
+      
+      throw new Error(`Failed to process batch jobs: ${errorData.error || response.statusText}`);
     }
 
     const result = await response.json();
-    console.log('Batch processing result:', result);
+    console.log('Batch processing completed:', {
+      result,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Batch processing error:', error);
+    // Enhanced error logging
+    const errorDetails = {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString()
+    };
+
     if (error instanceof Error && error.message.includes('Failed to fetch')) {
-      console.error('Network error - Edge Function might not be deployed');
+      console.warn('Batch processing: Network error (Edge Function may not be deployed)', errorDetails);
+      return; // Silently handle network errors in development
     }
+    
+    console.error('Batch processing error:', errorDetails);
+    
+    // Log to Supabase if it's not a network error
+    if (!(error instanceof Error) || !error.message.includes('Failed to fetch')) {
+      await logEdgeFunctionError('batch-processor', errorDetails.message, errorDetails);
+    }
+    
     throw error;
   }
 }

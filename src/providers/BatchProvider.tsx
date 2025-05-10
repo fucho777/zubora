@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useCallback } from 'react';
 import { scheduleBatchJobs, processBatchJobs } from '../lib/batch';
+import { logEdgeFunctionError } from '../lib/utils';
 
 interface BatchContextType {
   runBatchJobs: () => Promise<void>;
@@ -15,25 +16,53 @@ export const BatchProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const runBatchJobs = useCallback(async () => {
     try {
       await scheduleBatchJobs();
-      // Only process batch jobs if scheduling was successful
+      
+      console.log('Batch jobs scheduled successfully', {
+        timestamp: new Date().toISOString()
+      });
+      
       try {
         await processBatchJobs();
       } catch (error) {
-        console.warn('Failed to process batch jobs:', error);
-        // Don't throw here to prevent app from crashing
+        const errorDetails = {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString()
+        };
+        
+        console.warn('Failed to process batch jobs:', errorDetails);
+        
+        // Log to Supabase if it's not a network error
+        if (!(error instanceof Error) || !error.message.includes('Failed to fetch')) {
+          await logEdgeFunctionError('batch-processor', errorDetails.message, errorDetails);
+        }
       }
     } catch (error) {
-      console.warn('Failed to schedule batch jobs:', error);
-      // Don't throw here to prevent app from crashing
+      const errorDetails = {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      };
+      
+      console.warn('Failed to schedule batch jobs:', errorDetails);
+      
+      // Log to Supabase if it's not a network error
+      if (!(error instanceof Error) || !error.message.includes('Failed to fetch')) {
+        await logEdgeFunctionError('batch-processor', 'Failed to schedule batch jobs', errorDetails);
+      }
     }
   }, []);
 
   useEffect(() => {
-    // Run initial batch jobs after a short delay
+    // Run initial batch jobs after a delay to ensure Edge Function is ready
     const initialJobsTimeout = setTimeout(runBatchJobs, 1000);
 
     // Set up interval for batch jobs
     const batchInterval = setInterval(runBatchJobs, 60 * 60 * 1000); // Run every hour
+
+    console.log('Batch provider initialized', {
+      timestamp: new Date().toISOString()
+    });
 
     return () => {
       clearInterval(batchInterval);
