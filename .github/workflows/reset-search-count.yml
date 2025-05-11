@@ -13,12 +13,10 @@ jobs:
     steps:
       - name: Call Reset Function
         run: |
-          # ハードコードされたAPIキーを使用
-          API_KEY="woaJC4HQgxMy3TkFMYmLzScigBHqjs+l"
           echo "Attempting to reset daily search count..."
           
-          # URLパラメータ方式で実行
-          response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=$API_KEY" \
+          # 認証なしでシンプルに実行
+          response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count" \
             -H "Content-Type: application/json" \
             -d '{}')
           

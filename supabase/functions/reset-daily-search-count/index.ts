@@ -1,8 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// シンプルな定数定義（ハードコードしない場合はこの値を環境変数から取得する）
-const API_KEY = 'woaJC4HQgxMy3TkFMYmLzScigBHqjs+l';
-
 // Supabaseクライアントを初期化
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -58,42 +55,18 @@ const resetDailySearchCount = async () => {
 // Denoハンドラー
 Deno.serve(async (req) => {
   try {
-    // リクエストのURLからトークンを取得
-    const url = new URL(req.url);
-    const token = url.searchParams.get('token');
-
-    // GETリクエストの場合、認証なしで説明を返す
-    if (req.method === 'GET' && !token) {
+    // GETリクエストの場合、説明を返す
+    if (req.method === 'GET') {
       return new Response(JSON.stringify({ 
         description: 'This function resets daily search count for all users.',
-        usage: 'Send a POST request with token parameter'
+        usage: 'Send a POST request to execute the reset'
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    // シンプルなキー認証 - URLパラメータのみで認証
-    const isAuthenticated = token === API_KEY;
     
-    // デバッグ用のログ出力
-    console.log('Auth attempt:', {
-      tokenProvided: !!token,
-      tokenLength: token?.length,
-      isAuthenticated: isAuthenticated
-    });
-
-    // 認証チェック
-    if (!isAuthenticated) {
-      console.error('Authentication failed: invalid token');
-      
-      return new Response(JSON.stringify({ 
-        error: 'Unauthorized', 
-        message: 'Invalid or missing authentication'
-      }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // POSTリクエストなら、認証なしですぐに処理を実行
+    console.log('Executing reset without authentication check');
     
     // 検索回数リセット処理の実行
     const result = await resetDailySearchCount();
