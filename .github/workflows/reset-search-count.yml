@@ -11,48 +11,24 @@ jobs:
   reset-count:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up environment
-        run: |
-          # シークレットをファイルに保存（セキュリティのため一時ファイル）
-          echo "${{ secrets.CRON_SECRET }}" > /tmp/secret_token
-          chmod 600 /tmp/secret_token
-          
       - name: Call Reset Function
         run: |
-          # ファイルからトークンを読み込む
-          TOKEN=$(cat /tmp/secret_token)
+          # ハードコードされたAPIキーを使用
+          API_KEY="woaJC4HQgxMy3TkFMYmLzScigBHqjs+l"
           echo "Attempting to reset daily search count..."
           
           # URLパラメータ方式で実行
-          echo "Trying with URL parameter..."
-          response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=$TOKEN" \
+          response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=$API_KEY" \
             -H "Content-Type: application/json" \
             -d '{}')
           
-          echo "Response from URL parameter method: $response"
+          echo "Response: $response"
           
           # レスポンスから成功かどうかを判断
           if echo "$response" | grep -q "success.*true"; then
-            echo "✅ Successfully reset daily search count using URL parameter"
+            echo "✅ Successfully reset daily search count"
+            exit 0
           else
-            echo "❌ Failed with URL parameter method"
-            
-            # フォールバック: Authorization ヘッダー方式を試す
-            echo "Trying with Authorization header..."
-            fallback_response=$(curl -s -X POST https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d '{}')
-              
-            echo "Response from Authorization header method: $fallback_response"
-            
-            if echo "$fallback_response" | grep -q "success.*true"; then
-              echo "✅ Successfully reset daily search count using Authorization header"
-            else
-              echo "❌ Both methods failed"
-              exit 1
-            fi
+            echo "❌ Failed to reset daily search count: $response"
+            exit 1
           fi
-          
-          # 一時ファイルの削除
-          rm -f /tmp/secret_token

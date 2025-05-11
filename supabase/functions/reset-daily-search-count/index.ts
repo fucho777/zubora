@@ -1,5 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// シンプルな定数定義（ハードコードしない場合はこの値を環境変数から取得する）
+const API_KEY = 'woaJC4HQgxMy3TkFMYmLzScigBHqjs+l';
+
 // Supabaseクライアントを初期化
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -9,23 +12,19 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const checkEnvironment = () => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const cronSecret = Deno.env.get('CRON_SECRET');
   
   console.log('Environment check:', {
     supabaseUrlExists: !!supabaseUrl,
     supabaseKeyExists: !!supabaseKey,
-    cronSecretExists: !!cronSecret,
     supabaseUrlLength: supabaseUrl?.length,
-    supabaseKeyLength: supabaseKey?.length,
-    cronSecretLength: cronSecret?.length
+    supabaseKeyLength: supabaseKey?.length
   });
   
   return {
-    isValid: !!supabaseUrl && !!supabaseKey && !!cronSecret,
+    isValid: !!supabaseUrl && !!supabaseKey,
     missing: [
       !supabaseUrl ? 'SUPABASE_URL' : null,
-      !supabaseKey ? 'SUPABASE_SERVICE_ROLE_KEY' : null,
-      !cronSecret ? 'CRON_SECRET' : null
+      !supabaseKey ? 'SUPABASE_SERVICE_ROLE_KEY' : null
     ].filter(Boolean)
   };
 };
@@ -62,47 +61,30 @@ Deno.serve(async (req) => {
     // リクエストのURLからトークンを取得
     const url = new URL(req.url);
     const token = url.searchParams.get('token');
-    const envAuthKey = Deno.env.get('CRON_SECRET');
 
     // GETリクエストの場合、認証なしで説明を返す
     if (req.method === 'GET' && !token) {
       return new Response(JSON.stringify({ 
         description: 'This function resets daily search count for all users.',
-        usage: 'Send a POST request with token parameter or use Authorization header'
+        usage: 'Send a POST request with token parameter'
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Authorization headerとURLパラメータのどちらでも認証可能に
-    const authHeader = req.headers.get('Authorization') || '';
+    // シンプルなキー認証 - URLパラメータのみで認証
+    const isAuthenticated = token === API_KEY;
     
-    // トークンの完全一致を確認
-    // Bearer プレフィックスがある場合は取り除く
-    const headerToken = authHeader.replace(/^Bearer\s+/i, '');
-    
-    // どちらかの認証方法が成功するかチェック
-    const isHeaderAuth = envAuthKey && headerToken === envAuthKey;
-    const isTokenAuth = envAuthKey && token === envAuthKey;
-
-    // 認証情報のデバッグ出力
-    console.log('Auth debug:', { 
-      headerAuthPresent: !!authHeader,
-      headerToken: headerToken ? headerToken.substring(0, 5) + '...' : 'none',
-      tokenAuthPresent: !!token,
-      envKeyPresent: !!envAuthKey,
-      headerMatches: isHeaderAuth,
-      tokenMatches: isTokenAuth
+    // デバッグ用のログ出力
+    console.log('Auth attempt:', {
+      tokenProvided: !!token,
+      tokenLength: token?.length,
+      isAuthenticated: isAuthenticated
     });
 
     // 認証チェック
-    if (!isHeaderAuth && !isTokenAuth) {
-      // ログ出力を追加
-      console.error('Authentication failed:', { 
-        headerAuth: authHeader ? 'Present' : 'Missing', 
-        tokenAuth: token ? 'Present' : 'Missing',
-        envKeyExists: !!envAuthKey
-      });
+    if (!isAuthenticated) {
+      console.error('Authentication failed: invalid token');
       
       return new Response(JSON.stringify({ 
         error: 'Unauthorized', 
