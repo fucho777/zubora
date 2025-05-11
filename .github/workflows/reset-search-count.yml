@@ -11,16 +11,48 @@ jobs:
   reset-count:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up environment
+        run: |
+          # シークレットをファイルに保存（セキュリティのため一時ファイル）
+          echo "${{ secrets.CRON_SECRET }}" > /tmp/secret_token
+          chmod 600 /tmp/secret_token
+          
       - name: Call Reset Function
         run: |
-          # Authorization headerとURLパラメータの両方で試行
-          echo "Trying with Authorization header..."
-          curl -X POST https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d '{}'
+          # ファイルからトークンを読み込む
+          TOKEN=$(cat /tmp/secret_token)
+          echo "Attempting to reset daily search count..."
           
+          # URLパラメータ方式で実行
           echo "Trying with URL parameter..."
-          curl -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=${{ secrets.CRON_SECRET }}" \
+          response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=$TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{}'
+            -d '{}')
+          
+          echo "Response from URL parameter method: $response"
+          
+          # レスポンスから成功かどうかを判断
+          if echo "$response" | grep -q "success.*true"; then
+            echo "✅ Successfully reset daily search count using URL parameter"
+          else
+            echo "❌ Failed with URL parameter method"
+            
+            # フォールバック: Authorization ヘッダー方式を試す
+            echo "Trying with Authorization header..."
+            fallback_response=$(curl -s -X POST https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{}')
+              
+            echo "Response from Authorization header method: $fallback_response"
+            
+            if echo "$fallback_response" | grep -q "success.*true"; then
+              echo "✅ Successfully reset daily search count using Authorization header"
+            else
+              echo "❌ Both methods failed"
+              exit 1
+            fi
+          fi
+          
+          # 一時ファイルの削除
+          rm -f /tmp/secret_token
