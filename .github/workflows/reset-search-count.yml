@@ -1,0 +1,19 @@
+name: Reset Daily Search Count
+
+on:
+  schedule:
+    # 毎日UTC 15:00 (日本時間 0:00) に実行
+    - cron: "0 15 * * *"
+  # 手動実行用
+  workflow_dispatch:
+
+jobs:
+  reset-count:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Reset Function
+        run: |
+          curl -X POST https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          -H "Content-Type: application/json" \
+          -d '{}'

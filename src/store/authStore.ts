@@ -175,17 +175,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const today = new Date().toISOString().split('T')[0];
     let newCount = 1;
     
-    // If the user has searched today, increment the count
+    // 日付が変わっている場合はカウントをリセットする
+    // lastSearchDateがnull、または今日と異なる場合はリセット
     if (user.lastSearchDate === today) {
       newCount = user.dailySearchCount + 1;
       
-      // Check if the user has reached the daily limit
+      // 上限チェック
       if (newCount > 5) {
         return false;
       }
+    } else {
+      // 日付が変わった場合は検索回数を1にリセット
+      console.log('日付変更を検出:', user.lastSearchDate, '->', today, '- 検索回数をリセット');
+      newCount = 1;
     }
     
-    // Update the search count in the database
+    // データベース更新
     const { error } = await supabase
       .from('users')
       .update({
