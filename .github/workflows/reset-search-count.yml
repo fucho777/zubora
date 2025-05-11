@@ -14,15 +14,15 @@ jobs:
       - name: Call Database Function Directly
         run: |
           echo "Attempting to reset daily search count via REST API..."
-          
+
           # Supabase REST API を直接呼び出す
           response=$(curl -s -X POST "https://pmjdyztlqovnqjwavbpb.supabase.co/rest/v1/rpc/reset_daily_search_count" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json")
-          
+
           echo "Response: $response"
-          
+
           # レスポンスにエラーがないか確認
           if [[ "$response" == +([0-9]) ]] || echo "$response" | grep -q -v "error"; then
             echo "✅ Successfully reset daily search count. Count: $response"
