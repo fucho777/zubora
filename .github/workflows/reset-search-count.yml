@@ -13,7 +13,14 @@ jobs:
     steps:
       - name: Call Reset Function
         run: |
+          # Authorization headerとURLパラメータの両方で試行
+          echo "Trying with Authorization header..."
           curl -X POST https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-          -H "Content-Type: application/json" \
-          -d '{}'
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          
+          echo "Trying with URL parameter..."
+          curl -X POST "https://pmjdyztlqovnqjwavbpb.functions.supabase.co/reset-daily-search-count?token=${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
