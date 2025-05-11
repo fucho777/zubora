@@ -1,6 +1,6 @@
 # GitHub Secrets for Reset Function
 
-以下のシークレットをGitHubリポジトリに設定する必要があります：
+以下のシークレットを GitHub リポジトリに設定する必要があります：
 
 1. リポジトリの「Settings」タブを開く
 2. 左側のメニューから「Secrets and variables」→「Actions」を選択
@@ -9,8 +9,10 @@
 
 ## `SUPABASE_ANON_KEY`
 
-Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtamR5enRscW92bnFqd2F2YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MTg2MDUsImV4cCI6MjA2MjE5NDYwNX0.gAXbydA6xLBHUepiXER_97BGRHk6sT56Q-qOzCMmMp8`
+Value: `.env`ファイルにある`VITE_SUPABASE_ANON_KEY`の値を設定してください。
+
+**注意**: シークレットキーは直接ドキュメントに記載せず、適切に管理してください。
 
 ## 注意点
 
-シークレットを設定した後、GitHub Actionsワークフローを再度実行してください。
+シークレットを設定した後、GitHub Actions ワークフローを再度実行してください。

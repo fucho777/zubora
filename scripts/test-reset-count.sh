@@ -3,8 +3,21 @@
 # 検索回数リセット機能のテストスクリプト
 # このスクリプトは、REST APIを使用して検索回数をリセットします
 
-# ANON KEYを環境変数から読み取る
-ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtamR5enRscW92bnFqd2F2YnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MTg2MDUsImV4cCI6MjA2MjE5NDYwNX0.gAXbydA6xLBHUepiXER_97BGRHk6sT56Q-qOzCMmMp8"
+# .envファイルから環境変数を読み込む
+if [ -f ../.env ]; then
+  source ../.env
+  ANON_KEY=$VITE_SUPABASE_ANON_KEY
+else
+  echo "エラー: .envファイルが見つかりません。スクリプトを実行する前に.envファイルを作成してください。"
+  echo "例: VITE_SUPABASE_ANON_KEY=your_anon_key_here"
+  exit 1
+fi
+
+# キーが設定されているか確認
+if [ -z "$ANON_KEY" ]; then
+  echo "エラー: VITE_SUPABASE_ANON_KEYが.envファイルに設定されていません"
+  exit 1
+fi
 
 echo "Attempting to reset daily search count via REST API..."
 
